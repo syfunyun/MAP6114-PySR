@@ -49,47 +49,29 @@ feature_count = df_subset.shape[1] - 1
 X = df_subset.iloc[:, :feature_count].values
 y = df_subset.iloc[:, feature_count].values
 
-X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=23)
-
-default_pysr_params = dict(
-    populations=populations_count,
-    model_selection="best",
-)
+# X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.0, random_state=23)
 
 # Learn equations
 model = PySRRegressor(
     equation_file=f"{output_file_name}.csv",
     niterations=iterations_count,
     maxsize=30,
-    nested_constraints={"sin": {"sin": 0}, "sqrt": {"sqrt": 0}},
+    # nested_constraints={"sin": {"sin": 0, "cos": 0}, "cos": {"cos": 0, "sin": 0}, "sqrt": {"sqrt": 0, "square": 0}, "square": {"square": 0, "cube": 0}, "cube": {"cube": 0, "square": 0}},
     binary_operators=["+", "-", "*", "/"],
-    unary_operators=["neg", "exp", "sqrt", "square", "sin", "cos", "log"],
+    unary_operators=["neg", "exp", "sqrt", "square"],
     verbosity=1,
-
-    tempdir=None,               # Use in-memory storage for temporary directory
-    temp_equation_file=None,    # Use in-memory storage for equation file
-    delete_tempfiles=True,      # Ensure any residual temp files are deleted
-
-    **default_pysr_params,
+    populations=populations_count,
+    model_selection="best"
 )
 
 elapsed_time = time.perf_counter()
-model.fit(X_train, y_train)
+model.fit(X, y)
+# model.fit(X_train, y_train)
 elapsed_time = time.perf_counter() - elapsed_time
 
 time.sleep(3)
 
 print(f"Time elapsed: {elapsed_time} seconds\n")
-
-print("Pareto Front  \n$")
-for i in range(len(model.equations_)):
-  print(model.latex(i) + " \\\\")
-print("$\n")
-
-print("Selected \\ \n$")
-print(model.latex())
-print("$")
-
 
 # LaTeX output
 # After your model has been trained and you've obtained the results
@@ -107,6 +89,10 @@ with open(latex_file_name, 'w') as tex_file:
     # Write the time elapsed
     tex_file.write(r"\section*{Model Training Time}" + '\n')
     tex_file.write(f"Time elapsed: {elapsed_time:.2f} seconds." + '\n\n')
+    tex_file.write(f"Sample size: {sample_size}." + '\n')
+    tex_file.write(f"Number of iterations: {iterations_count}." + '\n')
+    tex_file.write(f"Number of populations: {populations_count}." + '\n\n')
+
     
     # Write the Pareto Front equations
     tex_file.write(r"\section*{Pareto Front Equations}" + '\n')
